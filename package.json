@@ -1,0 +1,70 @@
+{
+  "name": "@linkly-link-shortener/n8n-nodes-linkly",
+  "version": "1.0.3",
+  "description": "Linkly Link Shortener for n8n - Create short links, track clicks, UTM parameters, retargeting pixels, and automate URL management",
+  "keywords": [
+    "n8n-community-node-package",
+    "n8n",
+    "linkly",
+    "link-shortener",
+    "url-shortener",
+    "short-link",
+    "qr-code",
+    "click-tracking",
+    "analytics",
+    "utm",
+    "retargeting",
+    "marketing",
+    "automation",
+    "webhook"
+  ],
+  "license": "MIT",
+  "homepage": "https://linklyhq.com",
+  "author": {
+    "name": "Linkly",
+    "email": "support@linklyhq.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/linklyhq/n8n-nodes-linkly.git"
+  },
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc && gulp build:icons",
+    "dev": "tsc --watch",
+    "start": "n8n start",
+    "format": "prettier nodes credentials --write",
+    "lint": "eslint nodes credentials package.json",
+    "lintfix": "eslint nodes credentials package.json --fix",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/LinklyApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/Linkly/Linkly.node.js",
+      "dist/nodes/Linkly/LinklyTrigger.node.js"
+    ]
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.56.0",
+    "gulp": "^4.0.2",
+    "n8n": "^1.121.3",
+    "n8n-workflow": "^1.0.0",
+    "prettier": "^3.2.0",
+    "typescript": "^5.3.0"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
