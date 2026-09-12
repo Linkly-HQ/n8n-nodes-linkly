@@ -27,7 +27,7 @@ export class Linkly implements INodeType {
 		outputs: ['main'],
 		credentials: [
 			{
-				name: 'linklyApi',
+				name: 'linklyOAuth2Api',
 				required: true,
 			},
 		],
@@ -171,6 +171,13 @@ export class Linkly implements INodeType {
 						type: 'dateTime',
 						default: '',
 						description: 'When the link should expire',
+					},
+					{
+						displayName: 'Expiry Click Limit',
+						name: 'expiry_clicks',
+						type: 'number',
+						default: 0,
+						description: 'Number of clicks after which the link expires (0 = no limit)',
 					},
 					{
 						displayName: 'Expiry Destination',
@@ -425,6 +432,13 @@ export class Linkly implements INodeType {
 						type: 'dateTime',
 						default: '',
 						description: 'When the link should expire',
+					},
+					{
+						displayName: 'Expiry Click Limit',
+						name: 'expiry_clicks',
+						type: 'number',
+						default: 0,
+						description: 'Number of clicks after which the link expires (0 = no limit)',
 					},
 					{
 						displayName: 'Expiry Destination',

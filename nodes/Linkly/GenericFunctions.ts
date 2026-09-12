@@ -19,15 +19,16 @@ export async function linklyApiRequest(
 	body: IDataObject = {},
 	query: IDataObject = {},
 ): Promise<IDataObject | IDataObject[]> {
-	const credentials = await this.getCredentials('linklyApi');
+	const credentials = await this.getCredentials('linklyOAuth2Api');
+	const tokenData = credentials.oauthTokenData as IDataObject;
+	const accessToken = tokenData.access_token as string;
 
 	const options: IRequestOptions = {
 		method,
 		headers: {
 			'Content-Type': 'application/json',
 			Accept: 'application/json',
-			'X-API-KEY': credentials.apiKey as string,
-			'X-WORKSPACE-ID': credentials.workspaceId as string,
+			Authorization: `Bearer ${accessToken}`,
 		},
 		qs: query,
 		uri: `${BASE_URL}${endpoint}`,

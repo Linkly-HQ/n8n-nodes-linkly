@@ -2,6 +2,18 @@
 
 All notable changes to the Linkly Link Shortener n8n node will be documented in this file.
 
+## [2.0.1] - 2026-06-21
+
+### Fixed
+
+- **Click triggers** ("Any Link Clicked" / "Specific Link Clicked") now ignore link lifecycle events (`link.created` / `link.updated` / `link.deleted`). Previously they fired on every link create, update, and delete — emitting click items with no click data.
+
+## [1.0.4] - 2025-02-10
+
+### Added
+
+- **Expiry Click Limit** field for create and update operations
+
 ## [1.0.3] - 2024-11-27
 
 ### Added

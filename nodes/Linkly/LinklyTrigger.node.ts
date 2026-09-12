@@ -28,7 +28,7 @@ export class LinklyTrigger implements INodeType {
 		outputs: ['main'],
 		credentials: [
 			{
-				name: 'linklyApi',
+				name: 'linklyOAuth2Api',
 				required: true,
 			},
 		],
@@ -97,14 +97,14 @@ export class LinklyTrigger implements INodeType {
 				const webhookUrl = this.getNodeWebhookUrl('default');
 				const webhookData = this.getWorkflowStaticData('node');
 				const event = this.getNodeParameter('event') as string;
-				const credentials = await this.getCredentials('linklyApi');
-				const workspaceId = credentials.workspaceId as string;
 
 				let endpoint: string;
 				if (event === 'linkClick') {
 					const linkId = this.getNodeParameter('linkId') as number;
 					endpoint = `/api/v1/link/${linkId}/webhooks`;
 				} else {
+					const testResponse = await linklyApiRequest.call(this, 'POST', '/zapier/test') as IDataObject;
+					const workspaceId = testResponse.workspace_id as number;
 					endpoint = `/api/v1/workspace/${workspaceId}/webhooks`;
 				}
 
@@ -127,8 +127,6 @@ export class LinklyTrigger implements INodeType {
 				const webhookUrl = this.getNodeWebhookUrl('default');
 				const webhookData = this.getWorkflowStaticData('node');
 				const event = this.getNodeParameter('event') as string;
-				const credentials = await this.getCredentials('linklyApi');
-				const workspaceId = credentials.workspaceId as string;
 
 				let endpoint: string;
 				if (event === 'linkClick') {
@@ -136,6 +134,8 @@ export class LinklyTrigger implements INodeType {
 					endpoint = `/api/v1/link/${linkId}/webhooks`;
 					webhookData.linkId = linkId;
 				} else {
+					const testResponse = await linklyApiRequest.call(this, 'POST', '/zapier/test') as IDataObject;
+					const workspaceId = testResponse.workspace_id as number;
 					endpoint = `/api/v1/workspace/${workspaceId}/webhooks`;
 				}
 
@@ -155,8 +155,6 @@ export class LinklyTrigger implements INodeType {
 			async delete(this: IHookFunctions): Promise<boolean> {
 				const webhookData = this.getWorkflowStaticData('node');
 				const event = this.getNodeParameter('event') as string;
-				const credentials = await this.getCredentials('linklyApi');
-				const workspaceId = credentials.workspaceId as string;
 
 				if (!webhookData.webhookId) {
 					return true;
@@ -169,6 +167,8 @@ export class LinklyTrigger implements INodeType {
 					const linkId = webhookData.linkId as number;
 					endpoint = `/api/v1/link/${linkId}/webhooks/${hookId}`;
 				} else {
+					const testResponse = await linklyApiRequest.call(this, 'POST', '/zapier/test') as IDataObject;
+					const workspaceId = testResponse.workspace_id as number;
 					endpoint = `/api/v1/workspace/${workspaceId}/webhooks/${hookId}`;
 				}
 
@@ -187,6 +187,14 @@ export class LinklyTrigger implements INodeType {
 
 	async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
 		const bodyData = this.getBodyData() as IDataObject;
+
+		// Workspace/link webhook subscriptions also receive link lifecycle events
+		// (link.created/updated/deleted), which carry no `click` object. Ignore any
+		// non-click event so this trigger only fires on real clicks.
+		const eventType = bodyData.event as string | undefined;
+		if (eventType && eventType !== 'click') {
+			return {};
+		}
 
 		// Transform webhook payload to match output format
 		const payload = bodyData as {

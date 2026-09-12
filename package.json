@@ -1,6 +1,6 @@
 {
   "name": "@linkly-link-shortener/n8n-nodes-linkly",
-  "version": "1.0.3",
+  "version": "2.0.1",
   "description": "Linkly Link Shortener for n8n - Create short links, track clicks, UTM parameters, retargeting pixels, and automate URL management",
   "keywords": [
     "n8n-community-node-package",
@@ -44,7 +44,8 @@
   "n8n": {
     "n8nNodesApiVersion": 1,
     "credentials": [
-      "dist/credentials/LinklyApi.credentials.js"
+      "dist/credentials/LinklyApi.credentials.js",
+      "dist/credentials/LinklyOAuth2Api.credentials.js"
     ],
     "nodes": [
       "dist/nodes/Linkly/Linkly.node.js",

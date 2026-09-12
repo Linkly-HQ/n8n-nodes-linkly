@@ -5,7 +5,9 @@
 
 Linkly Link Shortener node for [n8n](https://n8n.io/) - Create short links, QR codes, track clicks, and automate your URL management workflows.
 
-[Linkly](https://linklyhq.com) is a powerful link shortener and click tracking platform with custom domains, retargeting pixels, UTM parameters, and real-time analytics.
+## About Linkly
+
+[Linkly](https://linklyhq.com) is a powerful link management platform that lets you create branded short links, track clicks in real-time, and optimize your marketing campaigns. Features include custom domains, UTM parameters, retargeting pixels, QR codes, and detailed analytics.
 
 ## Features
 
