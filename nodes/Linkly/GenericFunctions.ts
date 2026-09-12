@@ -29,6 +29,29 @@ export function getCredentialType(this: LinklyContext): 'linklyApi' | 'linklyOAu
 	return authentication === 'oAuth2' ? 'linklyOAuth2Api' : 'linklyApi';
 }
 
+/**
+ * Resolves which Linkly credential is attached to the node. The Authentication
+ * parameter is the first hint, but the editor does not always send it (for
+ * example when loading dropdown options), so fall back to whichever credential
+ * type actually exists on the node.
+ */
+export async function resolveCredentialType(
+	this: LinklyContext,
+): Promise<'linklyApi' | 'linklyOAuth2Api'> {
+	const preferred = getCredentialType.call(this);
+	const order: Array<'linklyApi' | 'linklyOAuth2Api'> =
+		preferred === 'linklyOAuth2Api' ? ['linklyOAuth2Api', 'linklyApi'] : ['linklyApi', 'linklyOAuth2Api'];
+	for (const type of order) {
+		try {
+			await this.getCredentials(type);
+			return type;
+		} catch {
+			// not attached, try the other one
+		}
+	}
+	return preferred;
+}
+
 export async function linklyApiRequest(
 	this: LinklyContext,
 	method: IHttpRequestMethods,
@@ -36,7 +59,7 @@ export async function linklyApiRequest(
 	body: IDataObject = {},
 	query: IDataObject = {},
 ): Promise<IDataObject | IDataObject[]> {
-	const credentialType = getCredentialType.call(this);
+	const credentialType = await resolveCredentialType.call(this);
 
 	const options: IHttpRequestOptions = {
 		method,
@@ -70,7 +93,7 @@ export async function linklyApiRequest(
  * bound to one workspace, so it is looked up from the workspaces endpoint.
  */
 export async function getWorkspaceId(this: LinklyContext): Promise<number> {
-	const credentialType = getCredentialType.call(this);
+	const credentialType = await resolveCredentialType.call(this);
 	if (credentialType === 'linklyApi') {
 		const credentials = await this.getCredentials('linklyApi');
 		return Number(credentials.workspaceId);

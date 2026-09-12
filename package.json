@@ -1,6 +1,6 @@
 {
   "name": "@linkly-link-shortener/n8n-nodes-linkly",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "description": "Linkly Link Shortener for n8n - Create short links, track clicks, UTM parameters, retargeting pixels, and automate URL management",
   "keywords": [
     "n8n-community-node-package",

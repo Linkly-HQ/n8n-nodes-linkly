@@ -2,6 +2,12 @@
 
 All notable changes to the Linkly Link Shortener n8n node will be documented in this file.
 
+## [2.1.3] - 2026-09-12
+
+### Fixed
+
+- The node now detects whether an API key or OAuth2 credential is attached instead of relying only on the Authentication parameter, which the editor omits when loading the link picker. Fixes "Error fetching options" on OAuth2 credentials.
+
 ## [2.1.2] - 2026-09-12
 
 ### Fixed
