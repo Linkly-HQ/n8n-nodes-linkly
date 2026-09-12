@@ -45,7 +45,7 @@ export class LinklyApi implements ICredentialType {
 	test: ICredentialTestRequest = {
 		request: {
 			baseURL: 'https://api.linklyhq.com/api/v1',
-			url: '/workspace/{{$credentials.workspaceId}}/domains',
+			url: '=/workspace/{{$credentials.workspaceId}}/domains',
 			method: 'GET',
 		},
 	};

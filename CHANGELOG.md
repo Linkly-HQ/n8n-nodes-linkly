@@ -2,6 +2,12 @@
 
 All notable changes to the Linkly Link Shortener n8n node will be documented in this file.
 
+## [2.1.2] - 2026-09-12
+
+### Fixed
+
+- The API key credential test now resolves the workspace ID expression correctly, so the connection test passes.
+
 ## [2.1.1] - 2026-09-12
 
 ### Fixed
