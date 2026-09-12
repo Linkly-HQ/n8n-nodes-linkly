@@ -2,6 +2,20 @@
 
 All notable changes to the Linkly Link Shortener n8n node will be documented in this file.
 
+## [2.1.0] - 2026-09-12
+
+### Changed
+
+- **Authentication** field on both nodes: choose **API Key** (default) or **OAuth2**. The API key credential from 1.x is supported again and is the recommended option.
+- **OAuth2 credential** now takes a client ID and client secret entered by the user. Earlier 2.0.x builds shipped a fixed client secret inside the package; it has been removed. Existing saved OAuth2 credentials keep working.
+- Requests go through n8n's `httpRequestWithAuthentication` helper, so OAuth2 token refresh is handled by n8n.
+- Build, lint and release now use `@n8n/node-cli`; the package is published from GitHub Actions with an npm provenance statement.
+
+### Fixed
+
+- Unknown resource or operation errors are raised as `NodeOperationError` with the failing item index.
+- Link pickers are labelled "Link Name or ID" and operations are listed alphabetically, matching n8n's UX guidelines.
+
 ## [2.0.1] - 2026-06-21
 
 ### Fixed

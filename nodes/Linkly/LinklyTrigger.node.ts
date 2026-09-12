@@ -8,6 +8,7 @@ import type {
 	IWebhookFunctions,
 	IWebhookResponseData,
 } from 'n8n-workflow';
+import { NodeConnectionTypes } from 'n8n-workflow';
 
 import { linklyApiRequest, linklyApiRequestAllItems } from './GenericFunctions';
 
@@ -25,11 +26,25 @@ export class LinklyTrigger implements INodeType {
 		},
 		documentationUrl: 'https://linklyhq.com/support/webhooks',
 		inputs: [],
-		outputs: ['main'],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [
+			{
+				name: 'linklyApi',
+				required: true,
+				displayOptions: {
+					show: {
+						authentication: ['apiKey'],
+					},
+				},
+			},
 			{
 				name: 'linklyOAuth2Api',
 				required: true,
+				displayOptions: {
+					show: {
+						authentication: ['oAuth2'],
+					},
+				},
 			},
 		],
 		webhooks: [
@@ -41,6 +56,23 @@ export class LinklyTrigger implements INodeType {
 			},
 		],
 		properties: [
+			{
+				displayName: 'Authentication',
+				name: 'authentication',
+				type: 'options',
+				noDataExpression: true,
+				options: [
+					{
+						name: 'API Key',
+						value: 'apiKey',
+					},
+					{
+						name: 'OAuth2',
+						value: 'oAuth2',
+					},
+				],
+				default: 'apiKey',
+			},
 			{
 				displayName: 'Event',
 				name: 'event',
@@ -61,7 +93,7 @@ export class LinklyTrigger implements INodeType {
 				default: 'workspaceClick',
 			},
 			{
-				displayName: 'Link',
+				displayName: 'Link Name or ID',
 				name: 'linkId',
 				type: 'options',
 				required: true,
@@ -116,7 +148,8 @@ export class LinklyTrigger implements INodeType {
 						webhookData.webhookId = webhookUrl;
 						return true;
 					}
-				} catch {
+				} catch (error) {
+					this.logger.warn(`Linkly: could not check existing webhooks: ${(error as Error).message}`);
 					return false;
 				}
 
@@ -143,13 +176,9 @@ export class LinklyTrigger implements INodeType {
 					url: webhookUrl,
 				};
 
-				try {
-					const response = await linklyApiRequest.call(this, 'POST', endpoint, body) as IDataObject;
-					webhookData.webhookId = response.id || webhookUrl;
-					return true;
-				} catch {
-					return false;
-				}
+				const response = (await linklyApiRequest.call(this, 'POST', endpoint, body)) as IDataObject;
+				webhookData.webhookId = response.id || webhookUrl;
+				return true;
 			},
 
 			async delete(this: IHookFunctions): Promise<boolean> {
@@ -174,7 +203,8 @@ export class LinklyTrigger implements INodeType {
 
 				try {
 					await linklyApiRequest.call(this, 'DELETE', endpoint);
-				} catch {
+				} catch (error) {
+					this.logger.warn(`Linkly: could not delete webhook: ${(error as Error).message}`);
 					return false;
 				}
 

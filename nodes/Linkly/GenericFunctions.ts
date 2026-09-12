@@ -3,8 +3,8 @@ import type {
 	IExecuteFunctions,
 	IHookFunctions,
 	IHttpRequestMethods,
+	IHttpRequestOptions,
 	ILoadOptionsFunctions,
-	IRequestOptions,
 	IWebhookFunctions,
 	JsonObject,
 } from 'n8n-workflow';
@@ -12,26 +12,39 @@ import { NodeApiError } from 'n8n-workflow';
 
 const BASE_URL = 'https://app.linklyhq.com';
 
+type LinklyContext = IExecuteFunctions | ILoadOptionsFunctions | IHookFunctions | IWebhookFunctions;
+
+/**
+ * Returns the credential type selected by the node's "Authentication" parameter.
+ * Defaults to the API key credential when the parameter is not present.
+ */
+function getCredentialType(this: LinklyContext): 'linklyApi' | 'linklyOAuth2Api' {
+	const getParameter = this.getNodeParameter as (name: string, index?: number) => unknown;
+	let authentication: unknown;
+	try {
+		authentication = getParameter.call(this, 'authentication', 0);
+	} catch {
+		authentication = 'apiKey';
+	}
+	return authentication === 'oAuth2' ? 'linklyOAuth2Api' : 'linklyApi';
+}
+
 export async function linklyApiRequest(
-	this: IExecuteFunctions | ILoadOptionsFunctions | IHookFunctions | IWebhookFunctions,
+	this: LinklyContext,
 	method: IHttpRequestMethods,
 	endpoint: string,
 	body: IDataObject = {},
 	query: IDataObject = {},
 ): Promise<IDataObject | IDataObject[]> {
-	const credentials = await this.getCredentials('linklyOAuth2Api');
-	const tokenData = credentials.oauthTokenData as IDataObject;
-	const accessToken = tokenData.access_token as string;
+	const credentialType = getCredentialType.call(this);
 
-	const options: IRequestOptions = {
+	const options: IHttpRequestOptions = {
 		method,
+		url: `${BASE_URL}${endpoint}`,
 		headers: {
-			'Content-Type': 'application/json',
 			Accept: 'application/json',
-			Authorization: `Bearer ${accessToken}`,
 		},
 		qs: query,
-		uri: `${BASE_URL}${endpoint}`,
 		json: true,
 	};
 
@@ -40,7 +53,11 @@ export async function linklyApiRequest(
 	}
 
 	try {
-		const response = await this.helpers.request(options);
+		const response = await this.helpers.httpRequestWithAuthentication.call(
+			this,
+			credentialType,
+			options,
+		);
 		return response as IDataObject | IDataObject[];
 	} catch (error) {
 		throw new NodeApiError(this.getNode(), error as JsonObject);

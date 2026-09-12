@@ -7,6 +7,7 @@ import type {
 	INodeType,
 	INodeTypeDescription,
 } from 'n8n-workflow';
+import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
 import { linklyApiRequest, linklyApiRequestAllItems, removeEmptyFields } from './GenericFunctions';
 
@@ -17,21 +18,53 @@ export class Linkly implements INodeType {
 		icon: 'file:linkly.svg',
 		group: ['transform'],
 		version: 1,
+		usableAsTool: true,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
 		description: 'Create short links, track clicks, and manage URL redirects with Linkly - the powerful link shortener with custom domains, QR codes, and real-time analytics',
 		defaults: {
 			name: 'Linkly',
 		},
 		documentationUrl: 'https://linklyhq.com/support/api',
-		inputs: ['main'],
-		outputs: ['main'],
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [
+			{
+				name: 'linklyApi',
+				required: true,
+				displayOptions: {
+					show: {
+						authentication: ['apiKey'],
+					},
+				},
+			},
 			{
 				name: 'linklyOAuth2Api',
 				required: true,
+				displayOptions: {
+					show: {
+						authentication: ['oAuth2'],
+					},
+				},
 			},
 		],
 		properties: [
+			{
+				displayName: 'Authentication',
+				name: 'authentication',
+				type: 'options',
+				noDataExpression: true,
+				options: [
+					{
+						name: 'API Key',
+						value: 'apiKey',
+					},
+					{
+						name: 'OAuth2',
+						value: 'oAuth2',
+					},
+				],
+				default: 'apiKey',
+			},
 			{
 				displayName: 'Resource',
 				name: 'resource',
@@ -59,32 +92,32 @@ export class Linkly implements INodeType {
 					{
 						name: 'Create',
 						value: 'create',
-						description: 'Create a new Linkly link',
+						description: 'Create a new short link',
 						action: 'Create a link',
+					},
+					{
+						name: 'Delete',
+						value: 'delete',
+						description: 'Delete a link permanently',
+						action: 'Delete a link',
 					},
 					{
 						name: 'Get',
 						value: 'get',
-						description: 'Get a specific link by ID',
+						description: 'Retrieve a link by ID',
 						action: 'Get a link',
 					},
 					{
 						name: 'Get Many',
 						value: 'getAll',
-						description: 'Get all links in the workspace',
+						description: 'Get many links in the workspace',
 						action: 'Get many links',
 					},
 					{
 						name: 'Update',
 						value: 'update',
-						description: 'Update an existing link by ID',
+						description: 'Update an existing link',
 						action: 'Update a link',
-					},
-					{
-						name: 'Delete',
-						value: 'delete',
-						description: 'Delete a link by ID',
-						action: 'Delete a link',
 					},
 				],
 				default: 'create',
@@ -166,18 +199,18 @@ export class Linkly implements INodeType {
 						description: 'Whether the link is enabled',
 					},
 					{
-						displayName: 'Expiry Date',
-						name: 'expiry_datetime',
-						type: 'dateTime',
-						default: '',
-						description: 'When the link should expire',
-					},
-					{
 						displayName: 'Expiry Click Limit',
 						name: 'expiry_clicks',
 						type: 'number',
 						default: 0,
 						description: 'Number of clicks after which the link expires (0 = no limit)',
+					},
+					{
+						displayName: 'Expiry Date',
+						name: 'expiry_datetime',
+						type: 'dateTime',
+						default: '',
+						description: 'When the link should expire',
 					},
 					{
 						displayName: 'Expiry Destination',
@@ -341,7 +374,7 @@ export class Linkly implements INodeType {
 			},
 			// Get operation fields
 			{
-				displayName: 'Link',
+				displayName: 'Link Name or ID',
 				name: 'linkId',
 				type: 'options',
 				required: true,
@@ -427,18 +460,18 @@ export class Linkly implements INodeType {
 						description: 'Whether the link is enabled',
 					},
 					{
-						displayName: 'Expiry Date',
-						name: 'expiry_datetime',
-						type: 'dateTime',
-						default: '',
-						description: 'When the link should expire',
-					},
-					{
 						displayName: 'Expiry Click Limit',
 						name: 'expiry_clicks',
 						type: 'number',
 						default: 0,
 						description: 'Number of clicks after which the link expires (0 = no limit)',
+					},
+					{
+						displayName: 'Expiry Date',
+						name: 'expiry_datetime',
+						type: 'dateTime',
+						default: '',
+						description: 'When the link should expire',
 					},
 					{
 						displayName: 'Expiry Destination',
@@ -662,10 +695,14 @@ export class Linkly implements INodeType {
 						await linklyApiRequest.call(this, 'DELETE', `/zapier/link/${linkId}`);
 						responseData = { success: true, deleted: linkId };
 					} else {
-						throw new Error(`Unknown operation: ${operation}`);
+						throw new NodeOperationError(this.getNode(), `Unknown operation: ${operation}`, {
+							itemIndex: i,
+						});
 					}
 				} else {
-					throw new Error(`Unknown resource: ${resource}`);
+					throw new NodeOperationError(this.getNode(), `Unknown resource: ${resource}`, {
+						itemIndex: i,
+					});
 				}
 
 				const executionData = this.helpers.constructExecutionMetaData(
@@ -678,7 +715,7 @@ export class Linkly implements INodeType {
 					returnData.push({ json: { error: (error as Error).message }, pairedItem: { item: i } });
 					continue;
 				}
-				throw error;
+				throw new NodeOperationError(this.getNode(), error as Error, { itemIndex: i });
 			}
 		}
 

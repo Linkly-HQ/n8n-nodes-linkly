@@ -1,6 +1,6 @@
 # n8n-nodes-linkly
 
-[![npm version](https://badge.fury.io/js/n8n-nodes-linkly.svg)](https://www.npmjs.com/package/n8n-nodes-linkly)
+[![npm version](https://img.shields.io/npm/v/%40linkly-link-shortener%2Fn8n-nodes-linkly.svg)](https://www.npmjs.com/package/@linkly-link-shortener/n8n-nodes-linkly)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Linkly Link Shortener node for [n8n](https://n8n.io/) - Create short links, QR codes, track clicks, and automate your URL management workflows.
@@ -26,13 +26,13 @@ Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes
 ### npm
 
 ```bash
-npm install n8n-nodes-linkly
+npm install @linkly-link-shortener/n8n-nodes-linkly
 ```
 
 ### n8n Cloud
 
 1. Go to **Settings > Community Nodes**
-2. Search for `n8n-nodes-linkly`
+2. Search for `@linkly-link-shortener/n8n-nodes-linkly`
 3. Click **Install**
 
 ## Operations
@@ -89,12 +89,13 @@ Real-time webhook triggers for link clicks:
 
 ## Credentials
 
-To use this node, you need to authenticate with your Linkly account:
+The node supports two ways to authenticate. Pick one in the **Authentication** field of the node.
+
+### API Key (recommended)
 
 1. Log in to [Linkly](https://app.linklyhq.com)
 2. Go to **Settings > API**
-3. Generate a new API key
-4. Copy your **API Key** and **Workspace ID**
+3. Copy your **API Key** and **Workspace ID**
 
 In n8n:
 
@@ -102,6 +103,10 @@ In n8n:
 2. Search for "Linkly API"
 3. Enter your API Key and Workspace ID
 4. Click **Save**
+
+### OAuth2
+
+OAuth2 requires a client ID and client secret issued for your n8n instance. Linkly does not offer self-service OAuth app registration yet; email support@linklyhq.com to request credentials. In n8n, create a "Linkly OAuth2 API" credential, enter the client ID and secret, and click **Connect my account**.
 
 ## Use Cases
 
@@ -119,15 +124,14 @@ In n8n:
 
 ## Local Development
 
-When running n8n locally over HTTP (not HTTPS), you may encounter authentication issues due to secure cookie settings.
-
-If you prefer to disable this security feature (not recommended), set the environment variable:
-
 ```bash
-N8N_SECURE_COOKIE=false npx n8n start
+npm install
+npm run dev     # builds the node and starts a local n8n with it loaded
+npm run lint    # n8n community node lint rules
+npm run build
 ```
 
-**Note:** This should only be used for local development. Always use HTTPS in production.
+Releases are published to npm by the GitHub Actions workflow in `.github/workflows/publish.yml` with an npm provenance statement, which n8n requires for verified community nodes. Run `npm run release` locally to bump the version, tag, and push; the workflow does the publish.
 
 ## Resources
 

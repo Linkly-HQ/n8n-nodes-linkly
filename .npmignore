@@ -5,9 +5,10 @@ credentials/
 
 # Config files
 tsconfig.json
-.eslintrc.js
-gulpfile.js
+tsconfig.tsbuildinfo
+eslint.config.mjs
 .gitignore
+.github/
 
 # Dev dependencies
 node_modules/

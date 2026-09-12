@@ -1,11 +1,9 @@
-import type {
-	ICredentialType,
-	INodeProperties,
-} from 'n8n-workflow';
+import type { Icon, ICredentialType, INodeProperties } from 'n8n-workflow';
 
 export class LinklyOAuth2Api implements ICredentialType {
 	name = 'linklyOAuth2Api';
 	displayName = 'Linkly OAuth2 API';
+	icon: Icon = 'file:../nodes/Linkly/linkly.svg';
 	documentationUrl = 'https://linklyhq.com/support/api';
 	extends = ['oAuth2Api'];
 
@@ -31,14 +29,22 @@ export class LinklyOAuth2Api implements ICredentialType {
 		{
 			displayName: 'Client ID',
 			name: 'clientId',
-			type: 'hidden',
-			default: 'linkly_n8n_25316062113802ac',
+			type: 'string',
+			default: '',
+			required: true,
+			description:
+				'The OAuth client ID issued for your n8n instance. Most users should use the Linkly API credential instead; contact support@linklyhq.com to request OAuth client credentials.',
 		},
 		{
 			displayName: 'Client Secret',
 			name: 'clientSecret',
-			type: 'hidden',
-			default: '3ecREEKyGHGnTaZlt_HLCEeKNsm97G2kqgJOPVAS',
+			type: 'string',
+			typeOptions: {
+				password: true,
+			},
+			default: '',
+			required: true,
+			description: 'The OAuth client secret issued for your n8n instance',
 		},
 		{
 			displayName: 'Authentication',

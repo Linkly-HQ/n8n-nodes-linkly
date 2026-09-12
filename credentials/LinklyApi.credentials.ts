@@ -1,4 +1,5 @@
 import type {
+	Icon,
 	IAuthenticateGeneric,
 	ICredentialTestRequest,
 	ICredentialType,
@@ -8,6 +9,7 @@ import type {
 export class LinklyApi implements ICredentialType {
 	name = 'linklyApi';
 	displayName = 'Linkly API';
+	icon: Icon = 'file:../nodes/Linkly/linkly.svg';
 	documentationUrl = 'https://linklyhq.com/support/api';
 	properties: INodeProperties[] = [
 		{
