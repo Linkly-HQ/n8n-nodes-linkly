@@ -37,21 +37,16 @@ export class LinklyApi implements ICredentialType {
 		type: 'generic',
 		properties: {
 			headers: {
-				'X-API-KEY': '={{$credentials.apiKey}}',
-				'X-WORKSPACE-ID': '={{$credentials.workspaceId}}',
+				Authorization: '=Bearer {{$credentials.apiKey}}',
 			},
 		},
 	};
 
 	test: ICredentialTestRequest = {
 		request: {
-			baseURL: 'https://app.linklyhq.com',
-			url: '/zapier/test',
-			method: 'POST',
-			body: {
-				api_key: '={{$credentials.apiKey}}',
-				workspace_id: '={{$credentials.workspaceId}}',
-			},
+			baseURL: 'https://api.linklyhq.com/api/v1',
+			url: '/workspace/{{$credentials.workspaceId}}/domains',
+			method: 'GET',
 		},
 	};
 }

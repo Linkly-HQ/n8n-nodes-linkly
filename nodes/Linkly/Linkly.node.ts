@@ -9,7 +9,7 @@ import type {
 } from 'n8n-workflow';
 import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
-import { linklyApiRequest, linklyApiRequestAllItems, removeEmptyFields } from './GenericFunctions';
+import { getWorkspaceId, linklyApiRequest, linklyListLinks, removeEmptyFields } from './GenericFunctions';
 
 export class Linkly implements INodeType {
 	description: INodeTypeDescription = {
@@ -372,6 +372,37 @@ export class Linkly implements INodeType {
 					},
 				],
 			},
+			// Get Many operation fields
+			{
+				displayName: 'Return All',
+				name: 'returnAll',
+				type: 'boolean',
+				default: false,
+				displayOptions: {
+					show: {
+						resource: ['link'],
+						operation: ['getAll'],
+					},
+				},
+				description: 'Whether to return all results or only up to a given limit',
+			},
+			{
+				displayName: 'Limit',
+				name: 'limit',
+				type: 'number',
+				default: 50,
+				typeOptions: {
+					minValue: 1,
+				},
+				displayOptions: {
+					show: {
+						resource: ['link'],
+						operation: ['getAll'],
+						returnAll: [false],
+					},
+				},
+				description: 'Max number of results to return',
+			},
 			// Get operation fields
 			{
 				displayName: 'Link Name or ID',
@@ -639,7 +670,7 @@ export class Linkly implements INodeType {
 	methods = {
 		loadOptions: {
 			async getLinks(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
-				const links = await linklyApiRequestAllItems.call(this, 'GET', '/zapier/link');
+				const links = await linklyListLinks.call(this);
 				return links.map((link) => ({
 					name: (link.name as string) || (link.full_url as string) || `Link ${link.id}`,
 					value: link.id as number,
@@ -659,41 +690,48 @@ export class Linkly implements INodeType {
 				let responseData: IDataObject | IDataObject[];
 
 				if (resource === 'link') {
+					const workspaceId = await getWorkspaceId.call(this);
+
 					if (operation === 'create') {
 						const url = this.getNodeParameter('url', i) as string;
 						const additionalFields = this.getNodeParameter('additionalFields', i) as IDataObject;
 
 						const body: IDataObject = {
 							url,
-							...additionalFields,
+							workspace_id: workspaceId,
+							...removeEmptyFields(additionalFields),
 						};
 
-						responseData = await linklyApiRequest.call(
-							this,
-							'POST',
-							'/zapier/link',
-							removeEmptyFields(body),
-						);
+						responseData = await linklyApiRequest.call(this, 'POST', '/link', body);
 					} else if (operation === 'get') {
 						const linkId = this.getNodeParameter('linkId', i) as number;
-						responseData = await linklyApiRequest.call(this, 'GET', `/zapier/link/${linkId}`);
+						responseData = await linklyApiRequest.call(
+							this,
+							'GET',
+							`/link/${linkId}`,
+							{},
+							{ workspace_id: workspaceId },
+						);
 					} else if (operation === 'getAll') {
-						responseData = await linklyApiRequestAllItems.call(this, 'GET', '/zapier/link');
+						const returnAll = this.getNodeParameter('returnAll', i) as boolean;
+						const limit = returnAll ? 0 : (this.getNodeParameter('limit', i) as number);
+						responseData = await linklyListLinks.call(this, limit);
 					} else if (operation === 'update') {
 						const linkId = this.getNodeParameter('linkId', i) as number;
 						const updateFields = this.getNodeParameter('updateFields', i) as IDataObject;
 
-						responseData = await linklyApiRequest.call(
-							this,
-							'PUT',
-							`/zapier/link/${linkId}`,
-							removeEmptyFields(updateFields),
-						);
+						const body: IDataObject = {
+							id: linkId,
+							workspace_id: workspaceId,
+							...removeEmptyFields(updateFields),
+						};
+
+						responseData = await linklyApiRequest.call(this, 'POST', '/link', body);
 					} else if (operation === 'delete') {
 						const linkId = this.getNodeParameter('linkId', i) as number;
 
-						await linklyApiRequest.call(this, 'DELETE', `/zapier/link/${linkId}`);
-						responseData = { success: true, deleted: linkId };
+						await linklyApiRequest.call(this, 'DELETE', `/workspace/${workspaceId}/links/${linkId}`);
+						responseData = { deleted: true, id: linkId };
 					} else {
 						throw new NodeOperationError(this.getNode(), `Unknown operation: ${operation}`, {
 							itemIndex: i,

@@ -10,7 +10,7 @@ import type {
 } from 'n8n-workflow';
 import { NodeConnectionTypes } from 'n8n-workflow';
 
-import { linklyApiRequest, linklyApiRequestAllItems } from './GenericFunctions';
+import { getWorkspaceId, linklyApiRequest, linklyListLinks } from './GenericFunctions';
 
 export class LinklyTrigger implements INodeType {
 	description: INodeTypeDescription = {
@@ -114,7 +114,7 @@ export class LinklyTrigger implements INodeType {
 	methods = {
 		loadOptions: {
 			async getLinks(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
-				const links = await linklyApiRequestAllItems.call(this, 'GET', '/zapier/link');
+				const links = await linklyListLinks.call(this);
 				return links.map((link) => ({
 					name: (link.name as string) || (link.full_url as string) || `Link ${link.id}`,
 					value: link.id as number,
@@ -126,58 +126,57 @@ export class LinklyTrigger implements INodeType {
 	webhookMethods = {
 		default: {
 			async checkExists(this: IHookFunctions): Promise<boolean> {
-				const webhookUrl = this.getNodeWebhookUrl('default');
+				const webhookUrl = this.getNodeWebhookUrl('default') as string;
 				const webhookData = this.getWorkflowStaticData('node');
 				const event = this.getNodeParameter('event') as string;
+				const workspaceId = await getWorkspaceId.call(this);
 
-				let endpoint: string;
-				if (event === 'linkClick') {
-					const linkId = this.getNodeParameter('linkId') as number;
-					endpoint = `/api/v1/link/${linkId}/webhooks`;
-				} else {
-					const testResponse = await linklyApiRequest.call(this, 'POST', '/zapier/test') as IDataObject;
-					const workspaceId = testResponse.workspace_id as number;
-					endpoint = `/api/v1/workspace/${workspaceId}/webhooks`;
-				}
+				const endpoint =
+					event === 'linkClick'
+						? `/link/${this.getNodeParameter('linkId') as number}/webhooks`
+						: `/workspace/${workspaceId}/webhooks`;
 
 				try {
-					const response = await linklyApiRequest.call(this, 'GET', endpoint) as IDataObject;
-					const webhooks = (response.webhooks as string[]) || [];
-
-					if (webhooks.includes(webhookUrl as string)) {
+					const response = await linklyApiRequest.call(this, 'GET', endpoint, {}, {
+						workspace_id: workspaceId,
+					});
+					const hooks = Array.isArray(response)
+						? response.map((hook) => (hook as IDataObject).id as string)
+						: [];
+					if (hooks.includes(webhookUrl)) {
 						webhookData.webhookId = webhookUrl;
 						return true;
 					}
 				} catch (error) {
 					this.logger.warn(`Linkly: could not check existing webhooks: ${(error as Error).message}`);
-					return false;
 				}
 
 				return false;
 			},
 
 			async create(this: IHookFunctions): Promise<boolean> {
-				const webhookUrl = this.getNodeWebhookUrl('default');
+				const webhookUrl = this.getNodeWebhookUrl('default') as string;
 				const webhookData = this.getWorkflowStaticData('node');
 				const event = this.getNodeParameter('event') as string;
+				const workspaceId = await getWorkspaceId.call(this);
 
 				let endpoint: string;
 				if (event === 'linkClick') {
 					const linkId = this.getNodeParameter('linkId') as number;
-					endpoint = `/api/v1/link/${linkId}/webhooks`;
+					endpoint = `/link/${linkId}/webhooks`;
 					webhookData.linkId = linkId;
 				} else {
-					const testResponse = await linklyApiRequest.call(this, 'POST', '/zapier/test') as IDataObject;
-					const workspaceId = testResponse.workspace_id as number;
-					endpoint = `/api/v1/workspace/${workspaceId}/webhooks`;
+					endpoint = `/workspace/${workspaceId}/webhooks`;
 				}
 
-				const body = {
-					url: webhookUrl,
-				};
-
-				const response = (await linklyApiRequest.call(this, 'POST', endpoint, body)) as IDataObject;
-				webhookData.webhookId = response.id || webhookUrl;
+				const response = (await linklyApiRequest.call(
+					this,
+					'POST',
+					endpoint,
+					{ url: webhookUrl },
+					{ workspace_id: workspaceId },
+				)) as IDataObject;
+				webhookData.webhookId = (response.id as string) || webhookUrl;
 				return true;
 			},
 
@@ -189,22 +188,17 @@ export class LinklyTrigger implements INodeType {
 					return true;
 				}
 
+				const workspaceId = await getWorkspaceId.call(this);
 				const hookId = encodeURIComponent(webhookData.webhookId as string);
-				let endpoint: string;
-
-				if (event === 'linkClick') {
-					const linkId = webhookData.linkId as number;
-					endpoint = `/api/v1/link/${linkId}/webhooks/${hookId}`;
-				} else {
-					const testResponse = await linklyApiRequest.call(this, 'POST', '/zapier/test') as IDataObject;
-					const workspaceId = testResponse.workspace_id as number;
-					endpoint = `/api/v1/workspace/${workspaceId}/webhooks/${hookId}`;
-				}
+				const endpoint =
+					event === 'linkClick'
+						? `/link/${webhookData.linkId as number}/webhooks/${hookId}`
+						: `/workspace/${workspaceId}/webhooks/${hookId}`;
 
 				try {
-					await linklyApiRequest.call(this, 'DELETE', endpoint);
+					await linklyApiRequest.call(this, 'DELETE', endpoint, {}, { workspace_id: workspaceId });
 				} catch (error) {
-					this.logger.warn(`Linkly: could not delete webhook: ${(error as Error).message}`);
+					this.logger.warn(`Linkly: could not remove webhook: ${(error as Error).message}`);
 					return false;
 				}
 

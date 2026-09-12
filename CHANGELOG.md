@@ -2,6 +2,16 @@
 
 All notable changes to the Linkly Link Shortener n8n node will be documented in this file.
 
+## [2.1.1] - 2026-09-12
+
+### Fixed
+
+- All operations now use the public Linkly API (`api.linklyhq.com/api/v1`). Get Many, Update, Delete and the link pickers relied on retired `/zapier` routes and failed.
+- **Get Many** gained Return All and Limit and follows pagination.
+- **Delete** returns `{ "deleted": true, "id": … }`.
+- The click trigger resolves the workspace from the credential (API key) or the workspaces endpoint (OAuth2), and reads the v1 webhook list format.
+- The API key credential authenticates with a Bearer header and tests against the workspace domains endpoint.
+
 ## [2.1.0] - 2026-09-12
 
 ### Changed
